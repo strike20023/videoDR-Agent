@@ -148,28 +148,30 @@ async def format_supervisor_input(state: SupervisorState, config: RunnableConfig
     )
 
 
-# Agentic version
-agentic_Vdr_builder = StateGraph(
-    SupervisorState, 
-    input=AgentInputState, 
-    config_schema=Configuration
-)
-agentic_Vdr_builder.add_node("format_supervisor_input", format_supervisor_input)
-agentic_Vdr_builder.add_node("supervisor", supervisor)
-agentic_Vdr_builder.add_node("supervisor_tools", supervisor_tools)
-agentic_Vdr_builder.add_edge(START, "format_supervisor_input")
-agentic_Vdr_builder.add_edge("format_supervisor_input", "supervisor")
-agentic_Vdr = agentic_Vdr_builder.compile(checkpointer=MemorySaver())
+class DeepResearcher:
+    def __init__(self, mode: Literal["agentic", "workflow"] = "agentic"):
+        self.mode = mode
+        self.graph = self._build_graph()
 
-# Workflow version
-workflow_Vdr_builder = StateGraph(
-    SupervisorState, 
-    input=AgentInputState, 
-    config_schema=Configuration
-)
-workflow_Vdr_builder.add_node("get_video_infomation", get_video_infomation)
-workflow_Vdr_builder.add_node("supervisor", supervisor)
-workflow_Vdr_builder.add_node("supervisor_tools", supervisor_tools)
-workflow_Vdr_builder.add_edge(START, "get_video_infomation")
-workflow_Vdr_builder.add_edge("get_video_infomation", "supervisor")
-workflow_Vdr = workflow_Vdr_builder.compile(checkpointer=MemorySaver())
+    def _build_graph(self):
+        builder = StateGraph(
+            SupervisorState, 
+            input=AgentInputState, 
+            config_schema=Configuration
+        )
+        
+        builder.add_node("supervisor", supervisor)
+        builder.add_node("supervisor_tools", supervisor_tools)
+
+        if self.mode == "agentic":
+            builder.add_node("format_supervisor_input", format_supervisor_input)
+            builder.add_edge(START, "format_supervisor_input")
+            builder.add_edge("format_supervisor_input", "supervisor")
+        elif self.mode == "workflow":
+            builder.add_node("get_video_infomation", get_video_infomation)
+            builder.add_edge(START, "get_video_infomation")
+            builder.add_edge("get_video_infomation", "supervisor")
+        else:
+             raise ValueError(f"Invalid mode: {self.mode}. Must be 'agentic' or 'workflow'.")
+
+        return builder.compile(checkpointer=MemorySaver())

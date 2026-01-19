@@ -22,6 +22,8 @@ from pathlib import Path
 import pandas as pd
 from dotenv import load_dotenv
 
+from agentic_deep_research.deep_researcher import DeepResearcher
+
 # Load .env file
 load_dotenv()
 
@@ -152,14 +154,11 @@ class SanitizeLogFilter(logging.Filter):
 
 async def run_single(index: int, config: dict) -> dict:
     """Run single question"""
-    # Dynamically import deep_researcher
     mode = config["mode"]
-    if mode == "workflow":
-        from agentic_deep_research.deep_researcher import workflow_Vdr as deep_researcher
-    elif mode == "agentic":
-        from agentic_deep_research.deep_researcher import agentic_Vdr as deep_researcher
-    else:
-        raise ValueError(f"Mode must be 'workflow' or 'agentic', but got {mode}")
+    try:
+        deep_researcher = DeepResearcher(mode=mode).graph
+    except ValueError as e:
+        raise ValueError(f"Mode must be 'workflow' or 'agentic', but got {mode}") from e
 
     csv_input = Path(config["csv_input"])
     if not csv_input.exists():

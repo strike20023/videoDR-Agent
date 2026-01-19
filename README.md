@@ -109,11 +109,10 @@ seq 1 100 | xargs -P 10 -I {} uvx --with-editable . --python 3.11 python eval.py
 The results (trajectories) will be saved in the `trajs/<profile_name>` directory.
 
 ### Library Usage
-The core logic is in `src/agentic_deep_research/deep_researcher.py`. You can import `agentic_Vdr` or `workflow_Vdr` graphs to run the agent programmatically.
+The core logic is in `src/agentic_deep_research/deep_researcher.py`. You can import `DeepResearcher` class to run the agent programmatically.
 
 ```python
-from agentic_deep_research.deep_researcher import agentic_Vdr
-from agentic_deep_research.deep_researcher import workflow_Vdr
+from agentic_deep_research.deep_researcher import DeepResearcher
 from agentic_deep_research.state import AgentInputState
 from langchain_core.messages import HumanMessage
 
@@ -122,10 +121,14 @@ input_state = AgentInputState(
     video_url="path/to/video.mp4" # Optional
 )
 
-async for event in agentic_Vdr.astream(input_state):
+# Use agentic mode
+agent = DeepResearcher(mode="agentic").graph
+async for event in agent.astream(input_state):
     print(event)
     
-async for event in workflow_Vdr.astream(input_state):
+# Use workflow mode
+workflow = DeepResearcher(mode="workflow").graph
+async for event in workflow.astream(input_state):
     print(event)
 ```
 
